@@ -1,0 +1,164 @@
+body{
+    background-color: #36d3be;
+    font-family: "ff-prater-serif-web", serif;
+    font-weight: 400;
+    font-style: normal;
+    overscroll-behavior: none;
+}
+
+label{
+    font-size: 4vw;
+    margin: 25%;
+}
+input[type=text], select {
+    width: 50%;
+    height: 6vw;
+    padding: 18px 20px;
+    line-height: 2;
+    letter-spacing: normal;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    margin: 20px 25%;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 3vw;
+    font-family: "ff-prater-serif-web", serif;
+    font-weight: 400;
+    font-style: normal;
+}
+.mainButton, select {
+    width: 25%;
+    height: 5vw;
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #000;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 3vw;
+    font-family: "ff-prater-serif-web", serif;
+    font-weight: 400;
+    font-style: normal;
+    color: white;
+    background-color: black;
+    text-align: center;
+}
+
+.voteButton{
+    width: 80%;
+    height: 10vw;
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #000;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 5vw;
+    font-family: "ff-prater-serif-web", serif;
+    font-weight: 400;
+    font-style: normal;
+    color: white;
+    background-color: black;
+    text-align: center;
+}
+
+.voteButton:active {
+    color: black;
+    background-color: white;
+    border: 1px solid white;
+}
+
+
+.mainButton:active {
+    color: black;
+    background-color: white;
+    border: 1px solid white;
+}
+
+h1{
+    font-size: 96pt;
+    padding-top: 12pt;
+    text-align: center;
+}
+
+h2{
+    font-size: 80pt;
+    padding-top: 12pt;
+    text-align: center;
+}
+
+.column {
+    float: left;
+    width: 50%;
+    text-align: center;
+  }
+
+#loader {
+    border: 16px solid #b6dff7; /* Light grey */
+    border-top: 16px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 12vw;
+    height: 12vw;
+    margin: 5vw 40vw;
+    animation: spin 1.25s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@media screen and (max-width: 800px)
+{
+    
+    input[type=text], select {
+        margin: 20px 0px;
+        width: 100%;
+        height: 14vw;
+        font-size: 6vw;
+    }
+
+    .mainButton, select {
+        margin: 8px 0;
+        width: 50%;
+        width: 50%;
+        height: 10vw;
+        font-size: 6vw;
+    }
+
+
+    h1{
+        font-size: 12.9vw;
+        padding-top: 12pt;
+        text-align: center;
+    }
+
+    h2{
+        font-size: 10vw;
+        padding-top: 12pt;
+        text-align: center;
+    }
+
+    label{
+        font-size: 8vw;
+        margin:0;
+    }
+
+    #loader {
+        border: 16px solid #b6dff7; /* Light grey */
+        border-top: 16px solid #3498db; /* Blue */
+        border-radius: 50%;
+        width: 25vw;
+        height: 25vw;
+        margin: 5vw 32vw;
+        animation: spin 1.25s linear infinite;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+}
+

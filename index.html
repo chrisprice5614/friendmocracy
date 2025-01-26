@@ -1,0 +1,667 @@
+<!DOCTYPE HTML>
+<html ng-app="app">
+<head>
+        <title>Friendmocracy</title>
+        <link rel="icon" type="image/x-icon" href="/media/favicon.ico">
+        <meta charset='utf-8'>
+        <meta name="DC.title" content="Friendmocracy" />
+        <meta name = "keywords" content ="">
+        <meta name = "viewport" content = "width=device-width, user-scalable=no">
+        <meta name = "description" content = "Join a game!">
+        <meta name = "author" content = "Friendmocracy">
+
+    <link rel="stylesheet" href="/main.css">
+    <link rel="stylesheet" href="https://use.typekit.net/ldk3nal.css">
+
+    <script type="text/javascript">
+
+    var myWebSocket;
+
+    restart = false;//For some messages
+    
+    host = false;
+    function connectToWS() {
+
+        //Chris, why the frickckkk
+        var endpoint = "http://10.0.0.231:6510";
+
+        myName = document.getElementById("username").value;
+        myCode = document.getElementById("roomcode").value;
+
+        deleteVotingButtons();
+
+
+        deleteMenu();
+
+        newElem = document.createElement("h2");
+        newText = document.createTextNode("Connecting...");
+        newElem.appendChild(newText);
+        att = document.createAttribute("id");
+        att.value = "connecting";
+        newElem.setAttributeNode(att);
+        document.getElementById('form').insertAdjacentElement("beforeend", newElem);
+
+        newElem = document.createElement("div");
+        att = document.createAttribute("id");
+        att.value = "loader";
+        newElem.setAttributeNode(att);
+        document.getElementById('form').insertAdjacentElement("beforeend", newElem);
+        
+        
+
+        
+        
+        if (myWebSocket !== undefined) {
+            myWebSocket.close()
+        }
+
+        myWebSocket = new WebSocket(endpoint);
+
+        
+        //When we join
+        myWebSocket.onopen = function(evt) {
+            console.log("onopen.");
+
+        };
+
+        //When we disconnect
+        myWebSocket.onclose = function(evt) {
+            console.log("onclose.");
+            if(reset==true)
+            {
+                location.reload();
+            }
+            else
+            {
+                reset = false;
+            }
+        };
+
+        //When something goes wrong
+        myWebSocket.onerror = function(evt) {
+            console.log("Error!");
+            alert("Something went wrong")
+        };
+
+        myWebSocket.onmessage = function(evt) {
+            var rawmsg = evt.data;
+            msg = rawmsg.trimEnd();
+            console.log('in :', msg);
+            
+
+            //Get ready for lots of If statements!!
+            if(msg == "Welcome!")
+            {
+                console.log("Sending it")
+                sendMsg("Player Join:"+myName+"c"+myCode);
+            }
+
+            if(msg == "Duplicate")
+            {
+                reset = false;
+                deleteLoading();
+                createTopMessage("Choose a different name.");
+                createMenu();
+            }
+
+
+            if(msg == "Womp Womp!")
+            {
+                reset = false;
+                deleteLoading();
+                createTopMessage("Room doesn't exist.");
+                createMenu();
+            }
+
+            if(msg == "All finished")
+            {
+                createGameOver();
+            }
+
+            if(msg == "You're First!")
+            {
+                host = true;
+                deleteLoading();
+
+                if (document.getElementById("topmessage"))
+                {
+                    document.getElementById('topmessage').remove();
+                }
+
+                newElem = document.createElement("h2");
+                newText = document.createTextNode("Welcome "+myName+"! You're the host!");
+                newElem.appendChild(newText);
+                att = document.createAttribute("id");
+                att.value = "topmessage";
+                newElem.setAttributeNode(att);
+                document.getElementById('form').insertAdjacentElement("beforeend", newElem);
+
+                createStartButton();
+            }
+
+            if(msg == "Joined Game!")
+            {
+                deleteLoading();
+                newElem = document.createElement("h2");
+                newText = document.createTextNode("Welcome "+myName+"!");
+                newElem.appendChild(newText);
+                att = document.createAttribute("id");
+                att.value = "topmessage";
+                newElem.setAttributeNode(att);
+                document.getElementById('form').insertAdjacentElement("beforeend", newElem);
+            }
+
+            if(msg == "Joined Audience!")
+            {
+                deleteLoading();
+                newElem = document.createElement("h2");
+                newText = document.createTextNode("Welcome "+myName+"!");
+                newElem.appendChild(newText);
+                att = document.createAttribute("id");
+                att.value = "topmessage";
+                newElem.setAttributeNode(att);
+                document.getElementById('form').insertAdjacentElement("beforeend", newElem);
+            }
+
+
+            if(msg == "Begin Tutorial")
+            {
+                if (document.getElementById("stopbutton"))
+                { 
+                    createSkipButton();
+                }
+                deleteLobby();
+                createTopMessage("Tutorial");
+            }
+
+            if(msg == "Begin Prompt")
+            {
+                deleteTutorial();
+                createTopMessage("Read the prompt, voting will start in a moment.");
+            }
+
+            if(msg == "Done Voting")
+            {
+                deleteVotingButtons();
+                createTopMessage("Results on screen!");
+            }
+
+            if(msg == "Off")
+            {
+                location.reload();
+            }
+
+            //Always starts at 0. 0th of "Sup" would be S
+            msgSlice = msg.slice(0, 13);
+            if(msgSlice == "Begin Voting:")
+            {
+                msgPrompt = msg.split("Begin Voting:").pop();
+                if (document.getElementById("topmessage"))
+                {
+                    document.getElementById('topmessage').remove();
+                }
+                createTopMessage("Vote based on: "+msgPrompt);
+                createVotingButtons(players);
+            }
+
+            msgSlice = msg.slice(0, 12);
+            if(msgSlice == "Player list:")
+            {
+                rawList = msg.split("Player list:").pop();
+                players = new Array(0);
+                rawPlayers = rawList.split("_");
+                for(var i = 0; i < rawPlayers.length-1;i++)
+                {
+                    players.push(rawPlayers[i]);
+                }
+                console.log(players);
+            }
+        };
+
+    }
+
+    //Sending a message
+    function sendMsg(msg) {
+        myWebSocket.send(msg);
+    }
+
+    function startGame() {
+        myWebSocket.send("Begin Game");
+
+        if (document.getElementById("startbutton"))
+        {
+            document.getElementById('startbutton').remove();
+        }
+        createStopButton();
+    }
+
+    function stopGame() {
+        myWebSocket.send("Stop Game");
+        if (document.getElementById("stopbutton"))
+        {
+            document.getElementById('stopbutton').remove();
+        }
+        createStartButton();
+    }
+
+    function skipTutorial(){
+        myWebSocket.send("Skip Tut");
+    }
+
+    //Disconnecting
+    function closeConn() {
+        myWebSocket.close();
+    }
+
+    function vote(toWho){
+        myWebSocket.send("Vote:"+myName+"_"+toWho);
+
+        deleteVotingButtons();
+        createTopMessage("Vote submitted!");
+    }
+
+
+    function deleteMenu() {
+        if (document.getElementById("topmessage"))
+        {
+            document.getElementById('topmessage').remove();
+        }
+        if (document.getElementById("usernameLabel"))
+        {
+            document.getElementById('usernameLabel').remove();
+            document.getElementById('username').remove();
+            document.getElementById('roomcodelabel').remove();
+            document.getElementById('roomcode').remove();
+            document.getElementById('joinbutton').remove();
+        }
+    }
+
+    function deleteLoading() {
+        if (document.getElementById("loader"))
+        {
+            document.getElementById('loader').remove();
+            document.getElementById('connecting').remove();
+        }
+    }
+
+    function deleteTutorial() {
+        if (document.getElementById("skipbutton"))
+        {
+            document.getElementById('skipbutton').remove();
+        }
+        if (document.getElementById("topmessage"))
+        {
+            document.getElementById('topmessage').remove();
+        }
+    }
+
+    function deleteLobby() {
+        if (document.getElementById("topmessage"))
+        {
+            document.getElementById('topmessage').remove();
+        }
+        if (document.getElementById("startbutton"))
+        {
+            document.getElementById('startbutton').remove();
+        }
+        if (document.getElementById("stopbutton"))
+        {
+            document.getElementById('stopbutton').remove();
+        }
+    }
+
+    function deleteVotingButtons() {
+        divElement = document.getElementById("bottomButtons"); // Replace "myDiv" with the actual ID of your div
+        divElement.innerHTML = "";
+        if (document.getElementById("topmessage"))
+        {
+            document.getElementById('topmessage').remove();
+        }
+    }
+
+    function newPlayers() {
+        sendMsg("New Players");
+        location.reload();
+    }
+
+    function samePlayers() {
+        sendMsg("Same Players");
+
+        if (document.getElementById("topmessage"))
+        {
+            document.getElementById('topmessage').remove();
+        }
+        if (document.getElementById("sameButton"))
+        {
+            document.getElementById('sameButton').remove();
+        }
+        if (document.getElementById("newButton"))
+        {
+            document.getElementById('newButton').remove();
+        }
+    }
+
+    function createGameOver() {
+        if (document.getElementById("topmessage"))
+        {
+            document.getElementById('topmessage').remove();
+        }
+        
+        if(host == true)
+        {
+            createTopMessage("Start a new game?");
+
+            newElem = document.createElement("input");
+            att = document.createAttribute("type");
+            att.value = "button";
+            newElem.setAttributeNode(att);
+            att = document.createAttribute("type");
+            att.value = "button";
+            newElem.setAttributeNode(att);
+            att = document.createAttribute("class");
+            att.value = "mainButton";
+            newElem.setAttributeNode(att);
+            att = document.createAttribute("id");
+            att.value = "sameButton";
+            newElem.setAttributeNode(att);
+            att = document.createAttribute("onclick");
+            att.value = "samePlayers()";
+            newElem.setAttributeNode(att);
+            att = document.createAttribute("value");
+            att.value = "Same Players";
+            newElem.setAttributeNode(att);
+            document.getElementById('centerbuttons').insertAdjacentElement("beforeend", newElem);
+
+            newElem = document.createElement("input");
+            att = document.createAttribute("type");
+            att.value = "button";
+            newElem.setAttributeNode(att);
+            att = document.createAttribute("type");
+            att.value = "button";
+            newElem.setAttributeNode(att);
+            att = document.createAttribute("class");
+            att.value = "mainButton";
+            newElem.setAttributeNode(att);
+            att = document.createAttribute("id");
+            att.value = "newButton";
+            newElem.setAttributeNode(att);
+            att = document.createAttribute("onclick");
+            att.value = "newPlayers()";
+            newElem.setAttributeNode(att);
+            att = document.createAttribute("value");
+            att.value = "New Players";
+            newElem.setAttributeNode(att);
+            document.getElementById('centerbuttons').insertAdjacentElement("beforeend", newElem);
+        }
+
+        createTopMessage("Thank you for playing!");
+    }
+
+    function createVotingButtons(names){
+
+        for(let i = 0; i < names.length; i ++)
+        {
+            thisName = names[i];
+            newButt = document.createElement("input");
+            att = document.createAttribute("type");
+            att.value = "button";
+            newButt.setAttributeNode(att);
+            att = document.createAttribute("type");
+            att.value = "button";
+            newButt.setAttributeNode(att);
+            att = document.createAttribute("class");
+            att.value = "voteButton";
+            newButt.setAttributeNode(att);
+            att = document.createAttribute("onclick");
+            att.value = "vote('"+thisName+"')";
+            newButt.setAttributeNode(att);
+            att = document.createAttribute("value");
+            att.value = thisName;
+            newButt.setAttributeNode(att);
+            
+            
+
+            newElem = document.createElement("div");
+            att = document.createAttribute("class");
+            att.value = "column";
+            newElem.setAttributeNode(att);
+
+            newElem.appendChild(newButt);
+
+            document.getElementById('bottomButtons').insertAdjacentElement("beforeend", newElem);
+        }
+        
+    }
+
+    function createTopMessage(textToWrite){
+        newElem = document.createElement("h2");
+        newText = document.createTextNode(textToWrite);
+        newElem.appendChild(newText);
+        att = document.createAttribute("id");
+        att.value = "topmessage";
+        newElem.setAttributeNode(att);
+        document.getElementById('form').insertAdjacentElement("beforeend", newElem);
+    }
+
+    function createStartButton() {
+        newElem = document.createElement("input");
+        att = document.createAttribute("type");
+        att.value = "button";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("type");
+        att.value = "button";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("class");
+        att.value = "mainButton";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("id");
+        att.value = "startbutton";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("onclick");
+        att.value = "startGame()";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("value");
+        att.value = "Start Game";
+        newElem.setAttributeNode(att);
+        document.getElementById('centerbuttons').insertAdjacentElement("beforeend", newElem);
+    }
+
+    function createSkipButton() {
+        newElem = document.createElement("input");
+        att = document.createAttribute("type");
+        att.value = "button";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("type");
+        att.value = "button";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("class");
+        att.value = "mainButton";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("id");
+        att.value = "skipbutton";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("onclick");
+        att.value = "skipTutorial()";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("value");
+        att.value = "Skip Tutorial";
+        newElem.setAttributeNode(att);
+        document.getElementById('centerbuttons').insertAdjacentElement("beforeend", newElem);
+    }
+
+    function createStopButton() {
+        newElem = document.createElement("input");
+        att = document.createAttribute("type");
+        att.value = "button";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("type");
+        att.value = "button";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("class");
+        att.value = "mainButton";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("id");
+        att.value = "stopbutton";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("onclick");
+        att.value = "stopGame()";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("value");
+        att.value = "Stop Countdown";
+        newElem.setAttributeNode(att);
+        document.getElementById('centerbuttons').insertAdjacentElement("beforeend", newElem);
+    }
+
+    
+
+    function createMenu(){
+        newLabel = document.createElement("label");
+        newText = document.createTextNode("Name");
+        newLabel.appendChild(newText);
+        att = document.createAttribute("for");
+        att.value = "username";
+        newLabel.setAttributeNode(att);
+        att = document.createAttribute("id");
+        att.value = "usernameLabel";
+        newLabel.setAttributeNode(att);
+
+        document.getElementById('form').insertAdjacentElement("beforeend", newLabel);
+
+        newElem = document.createElement("input");
+        att = document.createAttribute("oninput");
+        att.value = "this.value = this.value.toUpperCase()";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("maxlength");
+        att.value = "10";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("autocapitalize");
+        att.value = "off";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("autocomplete");
+        att.value = "off";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("autocorrect");
+        att.value = "off";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("type");
+        att.value = "text";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("id");
+        att.value = "username";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("name");
+        att.value = "username";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("value");
+        att.value = "";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("placeholder");
+        att.value = "Type your name";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("onkeydown");
+        att.value = "return /[A-Z0-9]/i.test(event.key)";
+        newElem.setAttributeNode(att);
+        document.getElementById('form').insertAdjacentElement("beforeend", newElem);
+
+        newLabel = document.createElement("label");
+        newText = document.createTextNode("Room Code");
+        newLabel.appendChild(newText);
+        att = document.createAttribute("for");
+        att.value = "roomcode";
+        newLabel.setAttributeNode(att);
+        att = document.createAttribute("id");
+        att.value = "roomcodelabel";
+        newLabel.setAttributeNode(att);
+
+        document.getElementById('form').insertAdjacentElement("beforeend", newLabel);
+
+        newElem = document.createElement("input");
+        att = document.createAttribute("oninput");
+        att.value = "this.value = this.value.toUpperCase()";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("maxlength");
+        att.value = "4";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("autocapitalize");
+        att.value = "off";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("autocomplete");
+        att.value = "off";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("autocorrect");
+        att.value = "off";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("type");
+        att.value = "text";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("id");
+        att.value = "roomcode";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("name");
+        att.value = "roomcode";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("value");
+        att.value = "";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("placeholder");
+        att.value = "Type a 4 letter code";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("onkeydown");
+        att.value = "return /[A-Z0-9]/i.test(event.key)";
+        newElem.setAttributeNode(att);
+        document.getElementById('form').insertAdjacentElement("beforeend", newElem);
+
+        newElem = document.createElement("input");
+        att = document.createAttribute("type");
+        att.value = "button";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("class");
+        att.value = "mainButton";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("id");
+        att.value = "joinbutton";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("onclick");
+        att.value = "connectToWS()";
+        newElem.setAttributeNode(att);
+        att = document.createAttribute("value");
+        att.value = "Join Game";
+        newElem.setAttributeNode(att);
+        document.getElementById('centerbuttons').insertAdjacentElement("beforeend", newElem);
+    }
+
+    
+
+
+
+
+    </script>
+</head>
+<body>
+    
+    <h1>Friendmocracy</h1>
+    <form id="form">
+        <label for="username" id="usernameLabel">Name</label>
+
+        <input oninput="this.value = this.value.toUpperCase()" maxlength="10" autocapitalize="off" autocomplete="off" autocorrect="off" type="text" id="username" name="username" value="" placeholder="Type your name" onkeydown="return /[A-Z0-9]/i.test(event.key)">
+
+        <label for="roomcode" id="roomcodelabel">Room Code</label>
+
+        <input oninput="this.value = this.value.toUpperCase()" type="text" autocapitalize="off" autocomplete="off" autocorrect="off" maxlength="4" id="roomcode" name="roomcode" value="" placeholder="Type a 4 letter code" onkeydown="return /[A-Z0-9]/i.test(event.key)">
+
+    </form>
+
+    <div id="centerbuttons" style="text-align: center;">
+        <input type="button" id="joinbutton" class="mainButton" onclick="connectToWS()" value="Join Game" /><br><br>
+    </div>
+    <div id="bottomButtons">
+
+    </div>
+    
+
+    
+
+
+
+</body>
+</html>
