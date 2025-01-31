@@ -6,6 +6,15 @@ body{
     overscroll-behavior: none;
 }
 
+a{
+    color: black;
+    font-size: 7vw;
+}
+
+a:active{
+    color: white;
+}
+
 label{
     font-size: 4vw;
     margin: 25%;
@@ -112,6 +121,10 @@ h2{
 
 @media screen and (max-width: 800px)
 {
+    a{
+        color: black;
+        font-size: 15vw;
+    }
     
     input[type=text], select {
         margin: 20px 0px;
