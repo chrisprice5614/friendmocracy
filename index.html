@@ -2,18 +2,41 @@
 <html ng-app="app">
 <head>
         <title>Friendmocracy</title>
-        <link rel="icon" type="image/x-icon" href="/favicon.ico">
+        <link rel="icon" type="image/x-icon" href="/media/favicon.ico">
         <meta charset='utf-8'>
         <meta name="DC.title" content="Friendmocracy" />
         <meta name = "keywords" content ="">
         <meta name = "viewport" content = "width=device-width, user-scalable=no">
         <meta name = "description" content = "Join a game!">
         <meta name = "author" content = "Friendmocracy">
+        
 
     <link rel="stylesheet" href="/main.css">
     <link rel="stylesheet" href="https://use.typekit.net/ldk3nal.css">
 
+    
+
     <script type="text/javascript">
+
+async function getData() {
+  const url = "https://api.friendmocracy.com:443";
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Response status: ${response.status}`);
+    }
+
+    const json = await response.json();
+    console.log(json);
+  } catch (error) {
+    console.error(error.message);
+
+  }
+}
+
+    //getData();
+
+
 
     var myWebSocket;
 
@@ -24,6 +47,8 @@
 
         //Chris, why the frickckkk
         var endpoint = "wss://api.friendmocracy.com:443";
+        //var endpoint = "ws://10.0.0.231:6510";
+        
 
         myName = document.getElementById("username").value;
         myCode = document.getElementById("roomcode").value;
@@ -56,7 +81,6 @@
         }
 
         myWebSocket = new WebSocket(endpoint);
-
         
         //When we join
         myWebSocket.onopen = function(evt) {
@@ -80,6 +104,7 @@
         //When something goes wrong
         myWebSocket.onerror = function(evt) {
             console.log("Error!");
+            alert("Something went wrong")
         };
 
         myWebSocket.onmessage = function(evt) {
@@ -177,6 +202,11 @@
             {
                 deleteTutorial();
                 createTopMessage("Read the prompt, voting will start in a moment.");
+            }
+
+            if(msg == "Disconnect")
+            {
+                location.reload();
             }
 
             if(msg == "Done Voting")
@@ -637,7 +667,8 @@
     </script>
 </head>
 <body>
-    
+    <a href="https://www.instagram.com/friendmocracy/" target="_blank"><ion-icon name="logo-instagram"></ion-icon></a>
+    <a href="https://www.facebook.com/friendmocracy" target="_blank"><ion-icon name="logo-facebook"></ion-icon></a>
     <h1>Friendmocracy</h1>
     <form id="form">
         <label for="username" id="usernameLabel">Name</label>
@@ -661,6 +692,7 @@
     
 
 
-
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 </body>
 </html>
