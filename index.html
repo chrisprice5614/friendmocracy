@@ -2,7 +2,7 @@
 <html ng-app="app">
 <head>
         <title>Friendmocracy</title>
-        <link rel="icon" type="image/x-icon" href="/media/favicon.ico">
+        <link rel="icon" type="image/x-icon" href="/favicon.ico">
         <meta charset='utf-8'>
         <meta name="DC.title" content="Friendmocracy" />
         <meta name = "keywords" content ="">
@@ -80,7 +80,6 @@
         //When something goes wrong
         myWebSocket.onerror = function(evt) {
             console.log("Error!");
-            alert("Something went wrong")
         };
 
         myWebSocket.onmessage = function(evt) {
