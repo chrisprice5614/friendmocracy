@@ -35,7 +35,8 @@ async function getData() {
 }
 
     //getData();
-
+    const userAgent = navigator.userAgent;
+    console.log(userAgent);
 
 
     var myWebSocket;
@@ -48,6 +49,8 @@ async function getData() {
         //Chris, why the frickckkk
         var endpoint = "wss://api.friendmocracy.com:443";
         //var endpoint = "ws://10.0.0.231:6510";
+
+        localStorage.setItem("rememberUser", document.getElementById("username").value);
         
 
         myName = document.getElementById("username").value;
@@ -104,20 +107,61 @@ async function getData() {
         //When something goes wrong
         myWebSocket.onerror = function(evt) {
             console.log("Error!");
-            alert("Something went wrong")
+            
         };
+
 
         myWebSocket.onmessage = function(evt) {
             var rawmsg = evt.data;
             msg = rawmsg.trimEnd();
             console.log('in :', msg);
             
+            ////Have the UUID at the end of every message
+            ///Compare UUIDs instead of ips
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
             //Get ready for lots of If statements!!
-            if(msg == "Welcome!")
+            msgSlice = msg.slice(0, 8);
+            if(msgSlice == "Welcome!")
             {
+                userId = msg.split("Welcome!").pop();
+
+                if (localStorage.getItem('uuid') == null)
+                {
+                    uuid = userId;
+                    localStorage.setItem('uuid',uuid);
+                }
                 console.log("Sending it")
-                sendMsg("Player Join:"+myName+"c"+myCode);
+                sendMsg("Player Join:"+myName+"c"+myCode+uuid);
+
+                
+
+                console.log(uuid);
             }
 
             if(msg == "Duplicate")
@@ -128,6 +172,10 @@ async function getData() {
                 createMenu();
             }
 
+            if(msg == "Ping!")
+            {
+                sendMsg("Pong!")
+            }
 
             if(msg == "Womp Womp!")
             {
@@ -144,6 +192,7 @@ async function getData() {
 
             if(msg == "You're First!")
             {
+                reset = false;
                 host = true;
                 deleteLoading();
 
@@ -175,11 +224,23 @@ async function getData() {
                 document.getElementById('form').insertAdjacentElement("beforeend", newElem);
             }
 
+            if(msg == "Reconnected!")
+            {
+                deleteLoading();
+                newElem = document.createElement("h2");
+                newText = document.createTextNode("Welcome back, "+myName+"! You'll be in next round!");
+                newElem.appendChild(newText);
+                att = document.createAttribute("id");
+                att.value = "topmessage";
+                newElem.setAttributeNode(att);
+                document.getElementById('form').insertAdjacentElement("beforeend", newElem);
+            }
+
             if(msg == "Joined Audience!")
             {
                 deleteLoading();
                 newElem = document.createElement("h2");
-                newText = document.createTextNode("Welcome "+myName+"!");
+                newText = document.createTextNode("Welcome to the audience! You'll be in next round!");
                 newElem.appendChild(newText);
                 att = document.createAttribute("id");
                 att.value = "topmessage";
@@ -255,7 +316,7 @@ async function getData() {
     }
 
     function startGame() {
-        myWebSocket.send("Begin Game");
+        myWebSocket.send("Begin Game"+uuid);
 
         if (document.getElementById("startbutton"))
         {
@@ -265,7 +326,7 @@ async function getData() {
     }
 
     function stopGame() {
-        myWebSocket.send("Stop Game");
+        myWebSocket.send("Stop Game"+uuid);
         if (document.getElementById("stopbutton"))
         {
             document.getElementById('stopbutton').remove();
@@ -274,7 +335,7 @@ async function getData() {
     }
 
     function skipTutorial(){
-        myWebSocket.send("Skip Tut");
+        myWebSocket.send("Skip Tut"+uuid);
     }
 
     //Disconnecting
@@ -283,7 +344,7 @@ async function getData() {
     }
 
     function vote(toWho){
-        myWebSocket.send("Vote:"+myName+"_"+toWho);
+        myWebSocket.send("Vote:"+myName+"_"+toWho+"-"+uuid);
 
         deleteVotingButtons();
         createTopMessage("Vote submitted!");
@@ -349,12 +410,12 @@ async function getData() {
     }
 
     function newPlayers() {
-        sendMsg("New Players");
+        sendMsg("New Players"+uuid);
         location.reload();
     }
 
     function samePlayers() {
-        sendMsg("Same Players");
+        sendMsg("Same Players"+uuid);
 
         if (document.getElementById("topmessage"))
         {
@@ -662,8 +723,7 @@ async function getData() {
     
 
 
-
-
+    
     </script>
 </head>
 <body>
@@ -673,7 +733,7 @@ async function getData() {
     <form id="form">
         <label for="username" id="usernameLabel">Name</label>
 
-        <input oninput="this.value = this.value.toUpperCase()" maxlength="10" autocapitalize="off" autocomplete="off" autocorrect="off" type="text" id="username" name="username" value="" placeholder="Type your name" onkeydown="return /[A-Z0-9]/i.test(event.key)">
+        <input oninput="this.value = this.value.toUpperCase()"  maxlength="10" autocapitalize="off" autocomplete="off" autocorrect="off" type="text" id="username" name="username" value="" placeholder="Type your name" onkeydown="return /[A-Z0-9]/i.test(event.key)">
 
         <label for="roomcode" id="roomcodelabel">Room Code</label>
 
@@ -694,5 +754,18 @@ async function getData() {
 
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+    <script>
+        if (localStorage.getItem('rememberUser') !== null)
+        {
+            document.getElementById("username").value = localStorage.getItem("rememberUser");
+        }
+
+        if (localStorage.getItem('uuid') !== null)
+        {
+            uuid = localStorage.getItem("uuid");
+        }
+        
+        </script>
 </body>
 </html>
